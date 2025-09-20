@@ -23,8 +23,9 @@ dependencies = [
     "ruff<1.0.0,>=0.3.7",
     "pre-commit<4.0.0,>=3.7.0",
     "asyncpg<1.0.0,>=0.29.0",
+    "minio>=7.2.16",
 ]
-name = "fastapitemplate"
+name = "nova_med"
 version = "0.1.0"
 description = ""
 readme = "README.md"
