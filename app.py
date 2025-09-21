@@ -8,7 +8,7 @@ from configs.Environment import get_environment_variables
 from errors.handlers import init_exception_handlers
 from routing.v1.clinical import router as clinical_router
 
-app = FastAPI(openapi_url="/core/openapi.json", docs_url="/core/docs")
+app = FastAPI(openapi_url="/api/core/openapi.json", docs_url="/api/core/docs")
 
 app.add_middleware(
     CORSMiddleware,
