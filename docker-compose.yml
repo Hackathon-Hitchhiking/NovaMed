@@ -60,6 +60,7 @@ services:
     container_name: db
     volumes:
       - postgres_storage:/var/lib/postgresql/data
+      - ./.docker/initdb:/docker-entrypoint-initdb.d
     env_file:
       - .docker/.env
     healthcheck:
