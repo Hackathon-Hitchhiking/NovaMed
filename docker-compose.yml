@@ -31,7 +31,7 @@ services:
       S3_SECRET_KEY: "${S3_SECRET_KEY:-minioadmin}"
       S3_USE_SSL: "${S3_USE_SSL:-false}"
     ports:
-      - "8000:8000"
+      - "8000:8001"
     volumes:
       - hf_models:/models
 
