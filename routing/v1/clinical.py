@@ -20,7 +20,7 @@ from schemas.patient import PatientCreateIn, PatientOut
 from services.clinical import ClinicalDecisionService
 
 
-router = APIRouter(prefix="/v1/clinical", tags=["clinical"])
+router = APIRouter(prefix="/api/v1/clinical", tags=["clinical"])
 
 
 @router.post("/patients", response_model=PatientOut)
