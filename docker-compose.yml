@@ -2,17 +2,17 @@ version: "3"
 services:
   ml:
     build:
-      context: .
-    image: medical-rag-service
+      context: MedicalRAG/
+      dockerfile: Dockerfile
     env_file:
-      - .docker/.env
+      - ./.docker/.env
     environment:
       DEV_MODE: "${DEV_MODE:-false}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
       ALLOWED_HOSTS: "${ALLOWED_HOSTS:-*}"
       TEXT_MODEL_NAME: "${TEXT_MODEL_NAME:-Henrychur/MMedLM2}"
       IMAGE_MODEL_NAME: "${IMAGE_MODEL_NAME:-google/medsiglip-448}"
-      HF_TOKEN: "${HF_TOKEN:-}"
+      HF_TOKEN: "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"
       TEXT_MAX_LENGTH: "${TEXT_MAX_LENGTH:-1024}"
       TORCH_DEVICE: "${TORCH_DEVICE:-cpu}"
       QDRANT_HOST: "${QDRANT_HOST:-qdrant}"
