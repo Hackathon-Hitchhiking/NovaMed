@@ -21,6 +21,10 @@ class StorageClient:
     ) -> str:
         raise NotImplementedError
 
+    async def get_bytes(self, s3_path: str) -> bytes:
+        """Download object bytes by an s3-style path like minio://bucket/key or s3://bucket/key."""
+        raise NotImplementedError
+
 
 class MinioStorage(StorageClient):
     def __init__(self, bucket: str = base_bucket) -> None:
@@ -42,6 +46,10 @@ class MinioStorage(StorageClient):
             content_type=ct,
         )
         return f"minio://{self.bucket}/{key}"
+
+    async def get_bytes(self, s3_path: str) -> bytes:
+        bucket, key = _parse_s3_path(s3_path, default_bucket=self.bucket)
+        return self._repo.get_object_as_bytes(object_path=key, bucket_name=bucket)
 
 
 class FileStorage(StorageClient):
@@ -68,6 +76,12 @@ class FileStorage(StorageClient):
         with open(path, "wb") as f:
             f.write(data)
         return f"s3://{self.bucket}/{key}"
+
+    async def get_bytes(self, s3_path: str) -> bytes:
+        _, key = _parse_s3_path(s3_path, default_bucket=self.bucket)
+        path = self.root / key
+        with open(path, "rb") as f:
+            return f.read()
 
 
 def _guess_extension(filename: Optional[str], content_type: Optional[str]) -> str:
@@ -113,3 +127,24 @@ def _to_minio_content_type(
     raise ErrBadRequest(
         f"Unsupported content-type: {content_type} (filename={filename})"
     )
+
+
+def _parse_s3_path(s3_path: str, *, default_bucket: str) -> tuple[str, str]:
+    """Parse s3/minio style URL into (bucket, key).
+
+    Accepts formats like:
+      - minio://bucket/key
+      - s3://bucket/key
+      - bucket/key (no scheme)
+    """
+    # Remove scheme if present
+    if "://" in s3_path:
+        _, rest = s3_path.split("://", 1)
+    else:
+        rest = s3_path
+
+    parts = rest.split("/", 1)
+    if len(parts) == 1:
+        return default_bucket, parts[0]
+    bucket, key = parts[0], parts[1]
+    return bucket or default_bucket, key

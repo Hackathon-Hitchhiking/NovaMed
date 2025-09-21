@@ -1,5 +1,5 @@
 up:
-	uv run uvicorn app:app --reload --port 8000
+	all_proxy="" uv run uvicorn app:app --reload --port 8080
 
 .PHONY: migrate-rev
 migrate-rev:
@@ -13,7 +13,7 @@ migrate-up:
 
 .PHONY: local
 local:
-	docker compose -f docker-compose.local.yml up
+	docker compose -f --env-file .docker/.env docker-compose.local.yml up
 
 .PHONY: test
 test:

@@ -24,6 +24,7 @@ dependencies = [
     "pre-commit<4.0.0,>=3.7.0",
     "asyncpg<1.0.0,>=0.29.0",
     "minio>=7.2.16",
+    "httpx[socks]>=0.28.1",
 ]
 name = "nova_med"
 version = "0.1.0"
