@@ -88,8 +88,8 @@ class MLClient:
             logger.error("ML search response is not JSON: path=/v1/search err={}", exc)
             return [], []
 
-        suggestions_raw = data.get("suggestions") if isinstance(data, dict) else None
-        referrals_raw = data.get("referrals") if isinstance(data, dict) else None
+        suggestions_raw = data.get("suggestions") if isinstance(data, list) else None
+        referrals_raw = data.get("referrals") if isinstance(data, list) else None
 
         suggestions: List[DiagnosisSuggestionOut] = []
         if isinstance(suggestions_raw, list):
