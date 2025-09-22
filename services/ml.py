@@ -79,7 +79,7 @@ class MLClient:
             except (TypeError, ValueError):
                 logger.debug("Invalid ML_SEARCH_TOP_K value: {}", self._top_k)
 
-        logger.debug("ML search request path=/v1/search payload_keys={}", list(payload.keys()))
+        logger.debug("ML search request path=/v1/search payload={}", list(payload)
 
         try:
             resp = await self._client.post("/v1/search", json=payload)
@@ -91,6 +91,8 @@ class MLClient:
         except ValueError as exc:
             logger.error("ML search response is not JSON: path=/v1/search err={}", exc)
             return [], []
+        
+        logger.debug(f"ML search response {data}")
 
         # Parse and validate via Pydantic schema
         try:
