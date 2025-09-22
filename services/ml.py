@@ -10,7 +10,11 @@ from loguru import logger
 from configs.ML import get_ml_http_client
 from services.storage import MinioStorage, StorageClient
 from schemas.anamnesis import AnamnesisIn
-from schemas.prediction import DiagnosisSuggestionOut
+from schemas.prediction import (
+    DiagnosisSuggestionOut,
+    ReferralSuggestionOut,
+    PredictionsOut,
+)
 
 
 class MLClient:
@@ -47,7 +51,7 @@ class MLClient:
         self,
         anamnesis: AnamnesisIn,
         exam_path: Optional[str] = None,
-    ) -> Tuple[List[DiagnosisSuggestionOut], List[str]]:
+    ) -> Tuple[List[DiagnosisSuggestionOut], List[ReferralSuggestionOut]]:
         payload: dict[str, object] = {
             "anamnesis": self._anamnesis_to_text(anamnesis),
         }
@@ -88,42 +92,24 @@ class MLClient:
             logger.error("ML search response is not JSON: path=/v1/search err={}", exc)
             return [], []
 
-        suggestions_raw = data.get("suggestions") if isinstance(data, list) else None
-        referrals_raw = data.get("referrals") if isinstance(data, list) else None
+        # Parse and validate via Pydantic schema
+        try:
+            parsed = PredictionsOut.model_validate(data)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("ML search response validation failed: err={}", exc)
+            return [], []
 
-        suggestions: List[DiagnosisSuggestionOut] = []
-        if isinstance(suggestions_raw, list):
-            for item in suggestions_raw:
-                if not isinstance(item, dict):
-                    continue
-                name = item.get("disease_name")
-                prob = item.get("probability")
-                rationale = item.get("rationale")
-                if not isinstance(name, str):
-                    continue
-                try:
-                    suggestions.append(
-                        DiagnosisSuggestionOut(
-                            disease_name=name,
-                            probability=float(prob) if prob is not None else 0.0,
-                            rationale=(str(rationale) if rationale is not None else None),
-                        )
-                    )
-                except Exception as exc:  # pragma: no cover - defensive
-                    logger.debug("Skip invalid suggestion item=%s err=%s", item, exc)
+        # Deduplicate referrals by (specialty, note) while preserving order
+        seen = set()
+        dedup_referrals: List[ReferralSuggestionOut] = []
+        for r in parsed.referrals:
+            key = (r.specialty, r.note)
+            if key in seen:
+                continue
+            seen.add(key)
+            dedup_referrals.append(r)
 
-        referral_specialties: List[str] = []
-        if isinstance(referrals_raw, list):
-            for item in referrals_raw:
-                if not isinstance(item, dict):
-                    continue
-                specialty = item.get("specialty")
-                if isinstance(specialty, str) and specialty:
-                    referral_specialties.append(specialty)
-
-        # Deduplicate while preserving order
-        referral_specialties = list(dict.fromkeys(referral_specialties))
-        return suggestions, referral_specialties
+        return list(parsed.suggestions), dedup_referrals
 
     def _anamnesis_to_text(self, anamnesis: AnamnesisIn) -> str:
         """Convert structured AnamnesisIn into a textual string for RAG search.

@@ -112,7 +112,9 @@ class ClinicalDecisionService:
         await self._persist_suggestions(
             visit_id, [(i.disease_name, i.probability, i.rationale) for i in dx_list]
         )
-        await self._persist_referrals(visit_id, referrals)
+        await self._persist_referrals(
+            visit_id, [(r.specialty, r.note) for r in referrals]
+        )
 
         return PredictionsOut(
             suggestions=[
@@ -123,7 +125,10 @@ class ClinicalDecisionService:
                 )
                 for i in dx_list
             ],
-            referrals=[ReferralSuggestionOut(specialty=s) for s in referrals],
+            referrals=[
+                ReferralSuggestionOut(specialty=r.specialty, note=r.note)
+                for r in referrals
+            ],
         )
 
     async def _persist_suggestions(
@@ -136,9 +141,8 @@ class ClinicalDecisionService:
         return await self.sugg_repo.replace_for_visit(visit_id, mapped)
 
     async def _persist_referrals(
-        self, visit_id: int, specialties: List[str]
+        self, visit_id: int, items: List[Tuple[str, Optional[str]]]
     ) -> Sequence:
-        items = [(s, None) for s in specialties]
         return await self.ref_repo.replace_for_visit(visit_id, items)
 
     async def create_visit(self, payload: VisitCreateIn) -> VisitCreateOut:
