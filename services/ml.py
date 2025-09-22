@@ -114,17 +114,42 @@ class MLClient:
         return list(parsed.suggestions), dedup_referrals
 
     def _anamnesis_to_text(self, anamnesis: AnamnesisIn) -> str:
-        """Convert structured AnamnesisIn into a textual string for RAG search.
+        """Flatten structured Anamnesis into a single values-only string.
 
-        Keeps it simple and robust by serialising non-empty fields to JSON.
+        Extracts only values (no keys) from nested dicts/lists, converts
+        primitives to strings, and joins them with ", ". Empty strings
+        and None are ignored. Booleans become "yes"/"no".
         """
         try:
             data = anamnesis.model_dump(exclude_none=True)
-            if not data:
-                return ""
-            return json.dumps(data, ensure_ascii=False)
         except Exception:  # pragma: no cover - defensive
             return ""
+
+        def collect_values(value, out: list[str]) -> None:
+            if value is None:
+                return
+            if isinstance(value, str):
+                s = value.strip()
+                if s:
+                    out.append(s)
+            elif isinstance(value, bool):
+                out.append("yes" if value else "no")
+            elif isinstance(value, (int, float)):
+                out.append(str(value))
+            elif isinstance(value, dict):
+                for v in value.values():
+                    collect_values(v, out)
+            elif isinstance(value, (list, tuple, set)):
+                for v in value:
+                    collect_values(v, out)
+            else:
+                s = str(value).strip()
+                if s and s not in ("{}", "[]"):
+                    out.append(s)
+
+        values: list[str] = []
+        collect_values(data, values)
+        return ", ".join(values)
 
     async def _maybe_fetch_image(self, s3_path: str) -> tuple[Optional[str], Optional[str]]:
         """Try to fetch an image referred by a minio-style URL and return base64 and mime.
