@@ -79,7 +79,7 @@ class MLClient:
             except (TypeError, ValueError):
                 logger.debug("Invalid ML_SEARCH_TOP_K value: {}", self._top_k)
 
-        logger.debug("ML search request path=/v1/search payload={}", list(payload))
+        logger.debug("ML search request path=/v1/search payload={}", payload)
 
         try:
             resp = await self._client.post("/v1/search", json=payload)
