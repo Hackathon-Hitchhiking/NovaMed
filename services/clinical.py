@@ -36,7 +36,7 @@ class ClinicalDecisionService:
     ) -> None:
         self.db = db
         self.storage = storage or MinioStorage()
-        self.ml = ml_client or MLClient(storage=self.storage, top_k=1)
+        self.ml = ml_client or MLClient(storage=self.storage, top_k=4)
 
         # Repositories
         self.visit_repo = VisitRepository(db)
